@@ -1,112 +1,88 @@
 import streamlit as st
 import time
-import matplotlib.pyplot as plt
-import pandas as pd
+import sys
 
-# =========================
-# ALGORITMA ITERATIF
-# =========================
-def faktor_ganjil_iteratif(n):
-    faktor = []
-    for i in range(1, n + 1, 2):  # hanya bilangan ganjil
+# Meningkatkan limit rekursi untuk angka yang besar
+sys.setrecursionlimit(2000)
+
+def find_factors_iterative(n):
+    """Mencari faktor dengan pendekatan perulangan (Iteratif)"""
+    factors = []
+    for i in range(1, n + 1):
         if n % i == 0:
-            faktor.append(i)
-    return faktor
+            factors.append(i)
+    return factors
 
-# =========================
-# ALGORITMA REKURSIF
-# =========================
-def faktor_ganjil_rekursif(n, i, faktor):
-    if i > n:
-        return faktor
+def find_factors_recursive(n, current=1, factors=None):
+    """Mencari faktor dengan pendekatan pemanggilan fungsi (Rekursif)"""
+    if factors is None:
+        factors = []
+    
+    if current > n:
+        return factors
+    
+    if n % current == 0:
+        factors.append(current)
+    
+    return find_factors_recursive(n, current + 1, factors)
+
+# --- UI STREAMLIT ---
+st.set_page_config(page_title="Analisis Algoritma Faktor Ganjil", layout="wide")
+
+st.title("📊 Studi Kasus: Pencarian Faktor Bilangan Ganjil")
+st.write("Tugas Besar Analisis Kompleksitas Algoritma (AKA)")
+
+st.info("""
+**Deskripsi:** Aplikasi ini membandingkan efisiensi antara metode **Iteratif** dan **Rekursif** untuk mencari faktor dari bilangan ganjil dalam rentang 1 hingga $n$.
+""")
+
+# Input User
+n = st.number_input("Masukkan bilangan ganjil (n):", min_value=1, step=2, value=15)
+
+if n % 2 == 0:
+    st.warning("⚠️ Mohon masukkan bilangan ganjil sesuai instruksi studi kasus.")
+else:
+    col1, col2 = st.columns(2)
+
+    # --- Eksekusi Iteratif ---
+    with col1:
+        st.subheader("🔄 Pendekatan Iteratif")
+        start_time = time.perf_counter()
+        res_iter = find_factors_iterative(n)
+        end_time = time.perf_counter()
+        
+        st.success(f"Faktor ditemukan: {res_iter}")
+        st.metric("Waktu Eksekusi", f"{end_time - start_time:.6f} detik")
+        st.code("""
+for i in range(1, n + 1):
     if n % i == 0:
-        faktor.append(i)
-    return faktor_ganjil_rekursif(n, i + 2, faktor)
+        factors.append(i)
+        """, language="python")
 
-# =========================
-# STREAMLIT UI
-# =========================
-st.title("Analisis Kompleksitas Algoritma")
-st.subheader("Mencari Faktor Bilangan Ganjil dalam Rentang n")
+    # --- Eksekusi Rekursif ---
+    with col2:
+        st.subheader("🔂 Pendekatan Rekursif")
+        try:
+            start_time = time.perf_counter()
+            res_recur = find_factors_recursive(n)
+            end_time = time.perf_counter()
+            
+            st.success(f"Faktor ditemukan: {res_recur}")
+            st.metric("Waktu Eksekusi", f"{end_time - start_time:.6f} detik")
+            st.code("""
+def recur(n, current):
+    if current > n: return
+    if n % current == 0: ...
+    return recur(n, current + 1)
+            """, language="python")
+        except RecursionError:
+            st.error("Recursion Depth Exceeded! Bilangan terlalu besar untuk metode rekursif standar.")
 
-st.write(
-    "Aplikasi ini membandingkan algoritma **iteratif** dan **rekursif** "
-    "dalam mencari faktor bilangan ganjil."
-)
-
-# Input bilangan ganjil
-n = st.number_input(
-    "Masukkan bilangan ganjil (n):",
-    min_value=1,
-    step=2
-)
-
-# =========================
-# PROSES UTAMA
-# =========================
-if st.button("Cari Faktor & Hitung Waktu"):
-    if n % 2 == 0:
-        st.error("Masukkan bilangan ganjil!")
-    else:
-        # Iteratif
-        start_iter = time.time()
-        faktor_iter = faktor_ganjil_iteratif(n)
-        end_iter = time.time()
-        waktu_iter = end_iter - start_iter
-
-        # Rekursif
-        start_rek = time.time()
-        faktor_rek = faktor_ganjil_rekursif(n, 1, [])
-        end_rek = time.time()
-        waktu_rek = end_rek - start_rek
-
-        # Output
-        st.subheader("Hasil Faktor Bilangan Ganjil")
-        st.write("**Iteratif:**", faktor_iter)
-        st.write("**Rekursif:**", faktor_rek)
-
-        st.subheader("Waktu Eksekusi")
-        st.write(f"Iteratif  : {waktu_iter:.6f} detik")
-        st.write(f"Rekursif : {waktu_rek:.6f} detik")
-
-# =========================
-# ANALISIS RUNNING TIME
-# =========================
-st.subheader("Analisis Running Time")
-
-if st.button("Jalankan Analisis"):
-    ukuran_input = [10, 100, 500, 1000, 5000, 10000]
-    waktu_iteratif = []
-    waktu_rekursif = []
-
-    for val in ukuran_input:
-        if val % 2 == 0:
-            val += 1
-
-        start = time.time()
-        faktor_ganjil_iteratif(val)
-        waktu_iteratif.append(time.time() - start)
-
-        start = time.time()
-        faktor_ganjil_rekursif(val, 1, [])
-        waktu_rekursif.append(time.time() - start)
-
-    # Tabel
-    data = pd.DataFrame({
-        "n": ukuran_input,
-        "Iteratif (detik)": waktu_iteratif,
-        "Rekursif (detik)": waktu_rekursif
-    })
-
-    st.subheader("Tabel Hasil Running Time")
-    st.dataframe(data)
-
-    # Grafik
-    st.subheader("Grafik Perbandingan Running Time")
-    fig, ax = plt.subplots()
-    ax.plot(ukuran_input, waktu_iteratif, marker='o', label="Iteratif")
-    ax.plot(ukuran_input, waktu_rekursif, marker='o', label="Rekursif")
-    ax.set_xlabel("Ukuran Input (n)")
-    ax.set_ylabel("Waktu Eksekusi (detik)")
-    ax.legend()
-    st.pyplot(fig)
+    # --- Analisis Singkat ---
+    st.divider()
+    st.subheader("📝 Kesimpulan Analisis")
+    st.write(f"""
+    1. **Kompleksitas Waktu:** Kedua algoritma memiliki kompleksitas waktu $O(n)$ karena harus mengecek setiap angka dari 1 hingga $n$.
+    2. **Kompleksitas Ruang:** Iteratif lebih efisien ($O(1)$ tambahan) dibandingkan Rekursif ($O(n)$ pada stack) karena setiap pemanggilan fungsi memakan memori.
+    3. **Observasi:** Untuk nilai $n$ yang sangat besar, metode Rekursif akan mengalami 'Stack Overflow', sedangkan Iteratif tetap berjalan stabil.
+    """)
